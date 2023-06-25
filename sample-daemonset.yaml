@@ -1,0 +1,40 @@
+---
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: machine-prometheus-metric
+  namespace: kube-system
+  labels:
+    app: exporter
+spec:
+  selector:
+    matchLabels:
+      app: DaemonSet-exporter
+  template:
+    metadata:
+      labels:
+        app: DaemonSet-exporter
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9001"
+        prometheus.io/scrape: "true"
+    spec:
+      containers:
+      - name: machine-prometheus-metric
+        image: medinvention/machine-prometheus-metric:0.0.4
+        env:
+        - name: NODE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 9001
+          initialDelaySeconds: 15
+          periodSeconds: 3
+        ports:
+        - containerPort: 9001
